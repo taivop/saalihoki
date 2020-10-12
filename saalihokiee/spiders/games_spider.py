@@ -3,7 +3,7 @@ import re
 from pprint import pprint
 
 class GamesSpider(scrapy.Spider):
-    name = "games"
+    name = "saalihokiee-games"
 
     re_whitespace = re.compile(r"\s+")
 
@@ -21,9 +21,11 @@ class GamesSpider(scrapy.Spider):
             vv = False
             k = False
             nr = int(self.rm_whitespace(cells[2].css("td::text").extract_first()))
+            player_id = None
 
             if nr < 100:    # Normal player
                 nimi = self.clean_whitespace(cells[3].css("a::text").extract_first())
+                player_id = int(cells[3].css("a")[0].attrib["info"])
             else:           # Official
                 content = cells[3].css("span span::text").extract_first()
                 if content is None:
@@ -35,12 +37,25 @@ class GamesSpider(scrapy.Spider):
             if len(cells[1].css(".check")) == 1:
                 k = True
 
-            player = [vv, k, nr, nimi]
+            player = [vv, k, nr, nimi, player_id]
             players_array.append(player)
 
         return players_array
 
     def extract_goals(self, tbl):
+        goals = []
+
+        useful_rows = tbl.css("tr")[2:]
+        header = ["Seis", "Aeg", "Nr", "Sööt", "Kood"]
+        for row in useful_rows:
+            cells = []
+            for cell_content in row.css("td::text()"):
+                cells.append(self.rm_whitespace(cell_content))
+
+            goals.append({k: v for (k, v) in zip(header, cells)})
+
+
+
         pass  # TODO
 
     def start_requests(self):
@@ -53,7 +68,7 @@ class GamesSpider(scrapy.Spider):
     def parse_page(self, response):
         table_rows = response.css("#sisu_content tr")
 
-        for tr in table_rows[1:3]:  # First row is header
+        for tr in table_rows[1:]:  # First row is header
             cells = tr.css("td")
             url = response.urljoin(cells[1].css("a::attr(href)").extract()[0])
             print(url)
@@ -92,8 +107,8 @@ class GamesSpider(scrapy.Spider):
         # Goals
         goals_tbl_a = response.css(".infotulp tr")[1].css("td")[0]
         goals_tbl_b = response.css(".infotulp tr")[1].css("td")[0]
-        game["a"]["goals"] = self.extract_goals(goals_tbl_a)
-        game["b"]["goals"] = self.extract_goals(goals_tbl_b)
+        #game["a"]["goals"] = self.extract_goals(goals_tbl_a)
+        #game["b"]["goals"] = self.extract_goals(goals_tbl_b)
 
         # Penalties
 
@@ -101,5 +116,5 @@ class GamesSpider(scrapy.Spider):
 
         # Goalies
 
-        pprint(game)
+        yield game
 
