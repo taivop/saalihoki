@@ -16,7 +16,7 @@ class PlayersSpider(scrapy.Spider):
 
     def start_requests(self):
         url_base = "https://www.saalihoki.ee/Meeskonnad/Mangija.aspx?id={}"
-        for i in range(50):#3285):
+        for i in range(3285):
             url = url_base.format(i)
             yield scrapy.Request(url=url, callback=self.parse_page)
 
@@ -72,7 +72,7 @@ class PlayersSpider(scrapy.Spider):
                 "item": "player_history_item",
                 "league_name": rest[0]["league_name"],
                 "n_games": sum([r["n_games"] for r in rest]),
-                "n_games": sum([r["n_goals"] for r in rest]),
+                "n_goals": sum([r["n_goals"] for r in rest]),
                 "n_passes": sum([r["n_passes"] for r in rest]),
             })
             del result["type"]
